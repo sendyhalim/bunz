@@ -16,6 +16,7 @@ cabal-version:       >=1.10
 library
   hs-source-dirs:      src
   exposed-modules:     Character
+                     , Beautifier
   build-depends:       base >= 4.7 && < 5
                      , text == 1.2.2.2
   default-language:    Haskell2010
