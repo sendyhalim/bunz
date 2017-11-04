@@ -11,8 +11,11 @@ import qualified Data.Text   as T
 
 type IndentationLevel = Int
 
+indentation :: T.Text
+indentation = "  "
+
 indent :: IndentationLevel -> T.Text -> T.Text
-indent level str = T.replicate level " " <> str
+indent level str = T.replicate level indentation <> str
 
 beautify :: IndentationLevel -> T.Text -> T.Text
 beautify _ "" = ""
