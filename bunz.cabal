@@ -32,7 +32,8 @@ executable bunz-exe
 test-suite bunz-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
-  main-is:             CharacterSpec.hs
+  main-is:             MainSpec.hs
+  other-modules:       CharacterSpec
   build-depends:       base
                      , bunz
                      , hspec == 2.4.4
