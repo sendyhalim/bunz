@@ -34,6 +34,7 @@ test-suite bunz-test
   hs-source-dirs:      test
   main-is:             MainSpec.hs
   other-modules:       CharacterSpec
+                     , BeautifierSpec
   build-depends:       base
                      , bunz
                      , hspec == 2.4.4
