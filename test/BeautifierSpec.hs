@@ -23,3 +23,15 @@ spec = do
       it "should indent by 2 levels" $ do
         B.indent 2 "{" `shouldBe` "    {"
 
+  describe "Beautifier.splitAtHead" $ do
+    context "when text first character is escaped" $ do
+      it "should split escaped character as the head" $ do
+        B.splitAtHead "\\\"hithere" `shouldBe` ("\\\"", "hithere")
+
+    context "when the first character is not escaped" $ do
+      it "should split correctly" $ do
+        B.splitAtHead "testtest" `shouldBe` ("t", "esttest")
+
+    context "when given empty text" $ do
+      it "should split into empty strings" $ do
+        B.splitAtHead "" `shouldBe` ("", "")
