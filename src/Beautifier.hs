@@ -34,7 +34,7 @@ splitAtHead str = T.splitAt 1 str
 string :: Bool -> T.Text -> T.Text
 string False str@(T.head -> '"') = "\"" <> string True (T.tail str)
 string True str@(T.head -> '"') = "\""
-string True str = (T.pack [T.head str]) <> string True (T.tail str)
+string True str = let (head, tail) = splitAtHead str in head <> string True tail
 
 -- | Extract the first string value starting from the front.
 firstString :: T.Text -> T.Text
