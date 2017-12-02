@@ -9,6 +9,7 @@ module Beautifier
   ) where
 
 import           Data.Monoid ((<>))
+import qualified Data.String as S
 import qualified Data.Text   as T
 
 -- Doctest setup
@@ -59,8 +60,22 @@ firstString :: T.Text -> T.Text
 firstString str = string False str
 
 
+isWhitespace x
+  | x == ' ' = True
+  | x == '\r' = True
+  | x == '\n' = True
+  | x == '\t' = True
+  | otherwise = False
+
+isEndOfValue x
+ | isWhitespace x = True
+ | x == ',' = True
+ | x == '}' = True
+ | x == ']' = True
+ | otherwise = False
+
 takeUntilEnd :: T.Text -> T.Text
-takeUntilEnd = T.takeWhile (\x -> x == '\n' || x == ',')
+takeUntilEnd = T.takeWhile (not . isEndOfValue)
 
 beautifyText :: IndentationLevel -> T.Text -> T.Text
 beautifyText _ "" = ""
