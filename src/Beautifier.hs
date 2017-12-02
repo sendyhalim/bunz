@@ -84,17 +84,15 @@ beautifyText i str@(T.head -> ' ') = beautifyText i (T.stripStart str)
 beautifyText i str@(T.head -> '\n') = beautifyText i (T.stripStart str)
 beautifyText i str@(T.head -> '\t') = beautifyText i (T.stripStart str)
 beautifyText i str@(T.head -> '{') = "{" <> newline
-  <> indent i (beautifyText (i + 1) (trimmedTail str))
+  <> indent (i + 1) (beautifyText (i + 1) (trimmedTail str))
 beautifyText i str@(T.head -> '[') = "[" <> newline
-  <> indent i (beautifyText (i + 1) (trimmedTail str))
+  <> indent (i + 1) (beautifyText (i + 1) (trimmedTail str))
+beautifyText i str@(T.head -> '}') = newline <> indent (i - 1) "}"
+  <> beautifyText (i - 1) (trimmedTail str)
+beautifyText i str@(T.head -> ']') = newline <> indent (i - 1) "]"
+  <> beautifyText (i - 1) (trimmedTail str)
 beautifyText i str@(T.head -> ',') = "," <> newline
-  <> indent i (beautifyText (i + 1) (trimmedTail str))
-beautifyText i str@(T.head -> '{') = "{" <> newline
-  <> indent i (beautifyText (i + 1) (trimmedTail str))
-beautifyText i str@(T.head -> '}') = newline <> "}"
-  <> indent i (beautifyText (i - 1) (trimmedTail str))
-beautifyText i str@(T.head -> ']') = newline <> "]"
-  <> indent i (beautifyText (i - 1) (trimmedTail str))
+  <> indent i (beautifyText i (trimmedTail str))
 beautifyText i str@(T.head -> '"') = groupedString <> beautifyText i restOfTheString
   where
     groupedString = firstString str
@@ -104,5 +102,5 @@ beautifyText i str = value <> beautifyText i restOfTheString
   where
     value = takeUntilEnd str
     restOfTheString = T.drop (T.length value) str
-beautify :: IndentationLevel -> String -> String
-beautify i str = T.unpack $ beautifyText i $ T.pack str
+beautify :: String -> String
+beautify = T.unpack . beautifyText 0 . T.pack
