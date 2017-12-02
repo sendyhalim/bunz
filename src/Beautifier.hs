@@ -58,12 +58,36 @@ string True str = let (head, tail) = splitAtHead str in head <> string True tail
 firstString :: T.Text -> T.Text
 firstString str = string False str
 
-beautify :: IndentationLevel -> T.Text -> T.Text
-beautify _ "" = ""
-beautify _ str@(T.length -> 0) = str
-beautify i str@(T.head -> ' ') = beautify i (T.stripStart str)
-beautify i str@(T.head -> '\n') = beautify i (T.stripStart str)
-beautify i str@(T.head -> '\t') = beautify i (T.stripStart str)
-beautify i str@(T.head -> '{') = "{" <> newline <> beautify (i + 1) (trimmedTail str)
-beautify i str@(T.head -> '[') = "[" <> newline <> beautify (i + 1) (trimmedTail str)
--- TODO: Add more pattern match
+
+takeUntilEnd :: T.Text -> T.Text
+takeUntilEnd = T.takeWhile (\x -> x == '\n' || x == ',')
+
+beautifyText :: IndentationLevel -> T.Text -> T.Text
+beautifyText _ "" = ""
+beautifyText _ str@(T.length -> 0) = str
+beautifyText i str@(T.head -> ' ') = beautifyText i (T.stripStart str)
+beautifyText i str@(T.head -> '\n') = beautifyText i (T.stripStart str)
+beautifyText i str@(T.head -> '\t') = beautifyText i (T.stripStart str)
+beautifyText i str@(T.head -> '{') = "{" <> newline
+  <> indent i (beautifyText (i + 1) (trimmedTail str))
+beautifyText i str@(T.head -> '[') = "[" <> newline
+  <> indent i (beautifyText (i + 1) (trimmedTail str))
+beautifyText i str@(T.head -> ',') = "," <> newline
+  <> indent i (beautifyText (i + 1) (trimmedTail str))
+beautifyText i str@(T.head -> '{') = "{" <> newline
+  <> indent i (beautifyText (i + 1) (trimmedTail str))
+beautifyText i str@(T.head -> '}') = newline <> "}"
+  <> indent i (beautifyText (i - 1) (trimmedTail str))
+beautifyText i str@(T.head -> ']') = newline <> "]"
+  <> indent i (beautifyText (i - 1) (trimmedTail str))
+beautifyText i str@(T.head -> '"') = groupedString <> beautifyText i restOfTheString
+  where
+    groupedString = firstString str
+    restOfTheString = T.drop (T.length groupedString) str
+beautifyText i str@(T.head -> ':') = ": " <> beautifyText i (trimmedTail str)
+beautifyText i str = value <> beautifyText i restOfTheString
+  where
+    value = takeUntilEnd str
+    restOfTheString = T.drop (T.length value) str
+beautify :: IndentationLevel -> String -> String
+beautify i str = T.unpack $ beautifyText i $ T.pack str
