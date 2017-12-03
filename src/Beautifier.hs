@@ -30,7 +30,7 @@ indent level str = T.replicate level indentation <> str
 trimmedTail :: T.Text -> T.Text
 trimmedTail = T.stripStart . T.tail
 
--- |Split the given string at its head while honouring escaped string.
+-- | Split the given string at its head while honouring escaped string.
 -- Examples:
 --
 -- >>> splitAtHead "whatsup"
@@ -43,7 +43,7 @@ splitAtHead "" = ("", "")
 splitAtHead str@(T.head -> '\\') = T.splitAt 2 str
 splitAtHead str = T.splitAt 1 str
 
--- |Extract string within double quotes `"` including the double quotes ignoring
+-- | Extract string within double quotes `"` including the double quotes ignoring
 -- the suffix after closing quote `"`
 --
 -- Examples:
@@ -60,6 +60,7 @@ firstString :: T.Text -> T.Text
 firstString str = string False str
 
 
+-- | Check if the given character is a whitespace
 isWhitespace x
   | x == ' ' = True
   | x == '\r' = True
@@ -67,6 +68,7 @@ isWhitespace x
   | x == '\t' = True
   | otherwise = False
 
+-- | Check if the given character is end of json value
 isEndOfValue x
  | isWhitespace x = True
  | x == ',' = True
@@ -74,33 +76,46 @@ isEndOfValue x
  | x == ']' = True
  | otherwise = False
 
-takeUntilEnd :: T.Text -> T.Text
-takeUntilEnd = T.takeWhile (not . isEndOfValue)
+-- | Extract json value from the given text
+--
+-- Examples
+--
+-- >>> extractJsonValue "123131}"
+-- "123131"
+--
+-- >>> extractJsonValue "false,true,false]"
+-- "false"
+extractJsonValue :: T.Text -> T.Text
+extractJsonValue = T.takeWhile (not . isEndOfValue)
 
+-- |Beautify the given JSON text based on the current indentation level.
 beautifyText :: IndentationLevel -> T.Text -> T.Text
-beautifyText _ "" = ""
-beautifyText _ str@(T.length -> 0) = str
-beautifyText i str@(T.head -> ' ') = beautifyText i (T.stripStart str)
-beautifyText i str@(T.head -> '\n') = beautifyText i (T.stripStart str)
-beautifyText i str@(T.head -> '\t') = beautifyText i (T.stripStart str)
-beautifyText i str@(T.head -> '{') = "{" <> newline
-  <> indent (i + 1) (beautifyText (i + 1) (trimmedTail str))
-beautifyText i str@(T.head -> '[') = "[" <> newline
-  <> indent (i + 1) (beautifyText (i + 1) (trimmedTail str))
-beautifyText i str@(T.head -> '}') = newline <> indent (i - 1) "}"
-  <> beautifyText (i - 1) (trimmedTail str)
-beautifyText i str@(T.head -> ']') = newline <> indent (i - 1) "]"
-  <> beautifyText (i - 1) (trimmedTail str)
-beautifyText i str@(T.head -> ',') = "," <> newline
-  <> indent i (beautifyText i (trimmedTail str))
-beautifyText i str@(T.head -> '"') = groupedString <> beautifyText i restOfTheString
+beautifyText i str
+  | str == "" = ""
+  | head == ' ' = stripStartThenParse str
+  | head == '\n' = stripStartThenParse str
+  | head == '\t' = stripStartThenParse str
+  | head == '{' = nextLineAfterOpening "{"
+  | head == '[' = nextLineAfterOpening "["
+  | head == '}' = nextLineAfterClosing "}"
+  | head == ']' = nextLineAfterClosing "]"
+  | head == ',' = "," <> newline <> indent i (beautifyText i (trimmedTail str))
+  | head == '"' = let groupedString = firstString str
+                      restOfTheString = T.drop (T.length groupedString) str
+                  in groupedString <> beautifyText i restOfTheString
+  | head == ':' = ": " <> beautifyText i (trimmedTail str)
+  | otherwise = let value = extractJsonValue str
+                in value <> beautifyText i (T.drop (T.length value) str)
   where
-    groupedString = firstString str
-    restOfTheString = T.drop (T.length groupedString) str
-beautifyText i str@(T.head -> ':') = ": " <> beautifyText i (trimmedTail str)
-beautifyText i str = value <> beautifyText i restOfTheString
-  where
-    value = takeUntilEnd str
-    restOfTheString = T.drop (T.length value) str
+    head = T.head str
+    stripStartThenParse = beautifyText i . T.stripStart
+    nextLineAfterOpening token = token
+      <> newline
+      <> indent (i + 1) (beautifyText (i + 1) (trimmedTail str))
+    nextLineAfterClosing token = newline
+      <> indent (i - 1) token
+      <> beautifyText (i - 1) (trimmedTail str)
+
+
 beautify :: String -> String
 beautify = T.unpack . beautifyText 0 . T.pack
