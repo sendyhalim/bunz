@@ -1,14 +1,14 @@
 name:                bunz
 version:             0.0.1
--- synopsis:
-description:         CLI tool to beautify JSON string
+synopsis:            CLI tool to beautify JSON string.
+description:         CLI tool to beautify JSON string.
 homepage:            https://github.com/sendyhalim/bunz
 license:             MIT
 license-file:        LICENSE
-author:              Sendy Halim
-maintainer:          sendyhalim93@gmail.com
-copyright:           2017 Sendy Halim
-category:            CLI
+author:              Sendy Halim <sendyhalim93@gmail.com>
+maintainer:          Sendy Halim <sendyhalim93@gmail.com>
+copyright:           (c) 2017 Sendy Halim
+category:            CLI, JSON
 build-type:          Simple
 extra-source-files:  README.md
 cabal-version:       >=1.10
@@ -21,7 +21,7 @@ library
                      , text == 1.2.2.2
   default-language:    Haskell2010
 
-executable bunz-exe
+executable bunz
   hs-source-dirs:      app
   main-is:             Main.hs
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
