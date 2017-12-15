@@ -5,6 +5,8 @@ module Main where
 import qualified Beautifier             as B
 import qualified Data.Text.Lazy         as T
 import qualified Data.Text.Lazy.IO      as TextIO
+import           Data.Version           (showVersion)
+import           Paths_bunz             (version)
 import           System.Console.CmdArgs ((&=))
 import qualified System.Console.CmdArgs as CA
 import           System.Posix.IO        (stdInput)
@@ -15,7 +17,7 @@ data Args = Args { jsonString :: String }
 
 
 args = Args { jsonString = CA.def &= CA.typ "JSON String" &= CA.argPos 0 }
-    &= CA.summary "JSON beautifier tool version 0.0.1"
+    &= CA.summary ("JSON beautifier tool version " ++ showVersion version)
 
 main :: IO ()
 main = queryTerminal stdInput >>= run
