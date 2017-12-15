@@ -3,10 +3,12 @@
 module Main where
 
 import qualified Beautifier             as B
+import qualified Data.Text.Lazy         as T
+import qualified Data.Text.Lazy.IO      as TextIO
 import           System.Console.CmdArgs ((&=))
 import qualified System.Console.CmdArgs as CA
-import qualified System.Posix.IO        as IO
-import qualified System.Posix.Terminal  as T
+import           System.Posix.IO        (stdInput)
+import           System.Posix.Terminal  (queryTerminal)
 
 data Args = Args { jsonString :: String }
   deriving (Show, CA.Data, CA.Typeable)
@@ -16,16 +18,16 @@ args = Args { jsonString = CA.def &= CA.typ "JSON String" &= CA.argPos 0 }
     &= CA.summary "JSON beautifier tool version 0.0.1"
 
 main :: IO ()
-main = T.queryTerminal IO.stdInput >>= run
+main = queryTerminal stdInput >>= run
 
-printBeautified :: String -> IO ()
-printBeautified = putStrLn . B.beautify
+printBeautified :: T.Text -> IO ()
+printBeautified = TextIO.putStr . B.beautify
 
 runFromStdInput :: IO ()
-runFromStdInput = getContents >>= printBeautified
+runFromStdInput = TextIO.getContents >>= printBeautified
 
 runFromArgs :: Args -> IO ()
-runFromArgs (Args { jsonString = str }) = printBeautified str
+runFromArgs (Args { jsonString = str }) = printBeautified $ T.pack str
 
 run :: Bool -> IO ()
 run False = runFromStdInput

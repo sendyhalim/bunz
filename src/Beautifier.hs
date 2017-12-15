@@ -8,15 +8,16 @@ module Beautifier
   , splitAtHead
   ) where
 
-import           Data.Monoid ((<>))
-import qualified Data.String as S
-import qualified Data.Text   as T
+import           Data.Int       (Int64)
+import           Data.Monoid    ((<>))
+import qualified Data.String    as S
+import qualified Data.Text.Lazy as T
 
 -- Doctest setup
 -- $setup
 -- >>> :set -XOverloadedStrings
 
-type IndentationLevel = Int
+type IndentationLevel = Int64
 
 indentation :: T.Text
 indentation = "  "
@@ -117,5 +118,5 @@ beautifyText i str
       <> beautifyText (i - 1) (trimmedTail str)
 
 
-beautify :: String -> String
-beautify = T.unpack . beautifyText 0 . T.pack
+beautify :: T.Text -> T.Text
+beautify = beautifyText 0
