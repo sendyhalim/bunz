@@ -10,7 +10,6 @@ module Beautifier
 
 import           Data.Int       (Int64)
 import           Data.Monoid    ((<>))
-import qualified Data.String    as S
 import qualified Data.Text.Lazy as T
 
 -- Doctest setup
