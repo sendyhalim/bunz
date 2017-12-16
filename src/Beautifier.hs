@@ -8,9 +8,10 @@ module Beautifier
   , splitAtHead
   ) where
 
-import           Data.Int       (Int64)
-import           Data.Monoid    ((<>))
-import qualified Data.Text.Lazy as T
+import           Data.Int               (Int64)
+import           Data.Monoid            ((<>))
+import qualified Data.Text.Lazy         as T
+import qualified Data.Text.Lazy.Builder as B
 
 -- Doctest setup
 -- $setup
@@ -21,14 +22,14 @@ type IndentationLevel = Int64
 indentation :: T.Text
 indentation = "  "
 
-newline :: T.Text
-newline = "\n"
+newline :: B.Builder
+newline = B.fromLazyText "\n"
 
-indent :: IndentationLevel -> T.Text -> T.Text
-indent level str = T.replicate level indentation <> str
+indent :: IndentationLevel -> B.Builder -> B.Builder
+indent level str = B.fromLazyText (T.replicate level indentation) <> str
 
-trimmedTail :: T.Text -> T.Text
-trimmedTail = T.stripStart . T.tail
+trimmedTail :: B.Builder -> B.Builder
+trimmedTail = B.fromLazyText . T.stripStart . T.tail . B.toLazyText
 
 -- | Split the given string at its head while honouring escaped string.
 -- Examples:
@@ -85,11 +86,14 @@ isEndOfValue x
 --
 -- >>> extractJsonValue "false,true,false]"
 -- "false"
-extractJsonValue :: T.Text -> T.Text
-extractJsonValue = T.takeWhile (not . isEndOfValue)
+extractJsonValue :: B.Builder -> B.Builder
+extractJsonValue = B.fromLazyText . T.takeWhile (not . isEndOfValue) . B.toLazyText
+
+dropBuilder :: Int64 -> B.Builder -> B.Builder
+dropBuilder length = B.fromLazyText . T.drop length . B.toLazyText
 
 -- |Beautify the given JSON text based on the current indentation level.
-beautifyText :: IndentationLevel -> T.Text -> T.Text
+beautifyText :: IndentationLevel -> B.Builder -> B.Builder
 beautifyText i str
   | str == "" = ""
   | head == ' ' = stripStartThenParse str
@@ -99,16 +103,17 @@ beautifyText i str
   | head == '[' = nextLineAfterOpening "["
   | head == '}' = nextLineAfterClosing "}"
   | head == ']' = nextLineAfterClosing "]"
-  | head == ',' = "," <> newline <> indent i (beautifyText i (trimmedTail str))
-  | head == '"' = let groupedString = firstString str
-                      restOfTheString = T.drop (T.length groupedString) str
-                  in groupedString <> beautifyText i restOfTheString
+  | head == ',' = B.fromLazyText "," <> newline <> indent i (beautifyText i (trimmedTail str))
+  | head == '"' = let groupedString = firstString (B.toLazyText str)
+                      restOfTheString = B.fromLazyText $ T.drop (T.length groupedString) $ B.toLazyText str
+                  in B.fromLazyText groupedString <> beautifyText i restOfTheString
   | head == ':' = ": " <> beautifyText i (trimmedTail str)
   | otherwise = let value = extractJsonValue str
-                in value <> beautifyText i (T.drop (T.length value) str)
+                    valueLength = T.length $ B.toLazyText value
+                 in value <> beautifyText i (dropBuilder valueLength str)
   where
-    head = T.head str
-    stripStartThenParse = beautifyText i . T.stripStart
+    head = T.head $ B.toLazyText str
+    stripStartThenParse = beautifyText i . B.fromLazyText . T.stripStart . B.toLazyText
     nextLineAfterOpening token = token
       <> newline
       <> indent (i + 1) (beautifyText (i + 1) (trimmedTail str))
@@ -118,4 +123,4 @@ beautifyText i str
 
 
 beautify :: T.Text -> T.Text
-beautify = beautifyText 0
+beautify = B.toLazyText . beautifyText 0 . B.fromLazyText
