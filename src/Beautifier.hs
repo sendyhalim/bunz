@@ -47,11 +47,11 @@ length' = T.length . B.toLazyText
 stripStart' :: B.Builder -> B.Builder
 stripStart' =  liftToBuilder T.stripStart
 
-space :: T.Text
-space = " "
+spaceIndentation :: T.Text
+spaceIndentation = "  "
 
 indentation :: IndentationLevel -> B.Builder
-indentation level = B.fromLazyText (T.replicate level space)
+indentation level = B.fromLazyText (T.replicate level spaceIndentation)
 
 newline :: B.Builder
 newline = B.fromLazyText "\n"
