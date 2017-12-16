@@ -19,14 +19,17 @@ import qualified Data.Text.Lazy.Builder as B
 
 type IndentationLevel = Int64
 
-indentation :: T.Text
-indentation = "  "
+space :: T.Text
+space = " "
+
+indentation :: IndentationLevel -> B.Builder
+indentation level = B.fromLazyText (T.replicate level space)
 
 newline :: B.Builder
 newline = B.fromLazyText "\n"
 
 indent :: IndentationLevel -> B.Builder -> B.Builder
-indent level str = B.fromLazyText (T.replicate level indentation) <> str
+indent level str = indentation level <> str
 
 trimmedTail :: B.Builder -> B.Builder
 trimmedTail = B.fromLazyText . T.stripStart . T.tail . B.toLazyText
@@ -103,7 +106,7 @@ beautifyText i str
   | head == '[' = nextLineAfterOpening "["
   | head == '}' = nextLineAfterClosing "}"
   | head == ']' = nextLineAfterClosing "]"
-  | head == ',' = B.fromLazyText "," <> newline <> indent i (beautifyText i (trimmedTail str))
+  | head == ',' = "," <> newline <> indent i (beautifyText i (trimmedTail str))
   | head == '"' = let groupedString = firstString (B.toLazyText str)
                       restOfTheString = B.fromLazyText $ T.drop (T.length groupedString) $ B.toLazyText str
                   in B.fromLazyText groupedString <> beautifyText i restOfTheString
