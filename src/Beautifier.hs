@@ -19,6 +19,29 @@ import qualified Data.Text.Lazy.Builder as B
 
 type IndentationLevel = Int64
 
+
+liftToBuilder :: (T.Text -> T.Text) -> (B.Builder -> B.Builder)
+liftToBuilder f = B.fromLazyText . f . B.toLazyText
+
+splitAt' :: Int64 -> B.Builder -> (B.Builder, B.Builder)
+splitAt' n str = (B.fromLazyText head, B.fromLazyText tail)
+  where (head, tail) = T.splitAt n (B.toLazyText str)
+
+head' :: B.Builder -> B.Builder
+head' = B.singleton . T.head . B.toLazyText
+
+tail' :: B.Builder -> B.Builder
+tail' = liftToBuilder T.tail
+
+drop' :: Int64 -> B.Builder -> B.Builder
+drop' length = liftToBuilder (T.drop length)
+
+length' :: B.Builder -> Int64
+length' = T.length . B.toLazyText
+
+stripStart' :: B.Builder -> B.Builder
+stripStart' =  liftToBuilder T.stripStart
+
 space :: T.Text
 space = " "
 
@@ -42,10 +65,10 @@ trimmedTail = B.fromLazyText . T.stripStart . T.tail . B.toLazyText
 --
 -- >>> splitAtHead "\nyeay"
 -- ("\n","yeay")
-splitAtHead :: T.Text -> (T.Text, T.Text)
+splitAtHead :: B.Builder -> (B.Builder, B.Builder)
 splitAtHead "" = ("", "")
-splitAtHead str@(T.head -> '\\') = T.splitAt 2 str
-splitAtHead str = T.splitAt 1 str
+splitAtHead str@(head' -> "\\") = splitAt' 2 str
+splitAtHead str = splitAt' 1 str
 
 -- | Extract string within double quotes `"` including the double quotes ignoring
 -- the suffix after closing quote `"`
@@ -54,13 +77,13 @@ splitAtHead str = T.splitAt 1 str
 --
 -- >>> string False "\"test\"whatuppp"
 -- "\"test\""
-string :: Bool -> T.Text -> T.Text
-string False str@(T.head -> '"') = "\"" <> string True (T.tail str)
-string True str@(T.head -> '"') = "\""
+string :: Bool -> B.Builder -> B.Builder
+string False str@(head' -> "\"") = "\"" <> string True (tail' str)
+string True str@(head' -> "\"") = "\""
 string True str = let (head, tail) = splitAtHead str in head <> string True tail
 
 -- | Extract the first string value starting from the front.
-firstString :: T.Text -> T.Text
+firstString :: B.Builder -> B.Builder
 firstString str = string False str
 
 
@@ -90,33 +113,32 @@ isEndOfValue x
 -- >>> extractJsonValue "false,true,false]"
 -- "false"
 extractJsonValue :: B.Builder -> B.Builder
-extractJsonValue = B.fromLazyText . T.takeWhile (not . isEndOfValue) . B.toLazyText
-
-dropBuilder :: Int64 -> B.Builder -> B.Builder
-dropBuilder length = B.fromLazyText . T.drop length . B.toLazyText
+extractJsonValue = liftToBuilder $ T.takeWhile (not . isEndOfValue)
 
 -- |Beautify the given JSON text based on the current indentation level.
 beautifyText :: IndentationLevel -> B.Builder -> B.Builder
 beautifyText i str
   | str == "" = ""
-  | head == ' ' = stripStartThenParse str
-  | head == '\n' = stripStartThenParse str
-  | head == '\t' = stripStartThenParse str
-  | head == '{' = nextLineAfterOpening "{"
-  | head == '[' = nextLineAfterOpening "["
-  | head == '}' = nextLineAfterClosing "}"
-  | head == ']' = nextLineAfterClosing "]"
-  | head == ',' = "," <> newline <> indent i (beautifyText i (trimmedTail str))
-  | head == '"' = let groupedString = firstString (B.toLazyText str)
-                      restOfTheString = B.fromLazyText $ T.drop (T.length groupedString) $ B.toLazyText str
-                  in B.fromLazyText groupedString <> beautifyText i restOfTheString
-  | head == ':' = ": " <> beautifyText i (trimmedTail str)
-  | otherwise = let value = extractJsonValue str
-                    valueLength = T.length $ B.toLazyText value
-                 in value <> beautifyText i (dropBuilder valueLength str)
+  | head == " " = stripStartThenParse str
+  | head == "\n" = stripStartThenParse str
+  | head == "\t" = stripStartThenParse str
+  | head == "{" = nextLineAfterOpening "{"
+  | head == "[" = nextLineAfterOpening "["
+  | head == "}" = nextLineAfterClosing "}"
+  | head == "]" = nextLineAfterClosing "]"
+  | head == "," = "," <> newline <> indent i (beautifyText i (trimmedTail str))
+  | head == "\"" =
+      let groupedString = firstString str
+          restOfTheString = drop' (length' groupedString) str
+          in groupedString <> beautifyText i restOfTheString
+  | head == ":" = ": " <> beautifyText i (trimmedTail str)
+  | otherwise =
+      let value = extractJsonValue str
+          valueLength = length' value
+          in value <> beautifyText i (drop' valueLength str)
   where
-    head = T.head $ B.toLazyText str
-    stripStartThenParse = beautifyText i . B.fromLazyText . T.stripStart . B.toLazyText
+    head = head' str
+    stripStartThenParse = beautifyText i . stripStart'
     nextLineAfterOpening token = token
       <> newline
       <> indent (i + 1) (beautifyText (i + 1) (trimmedTail str))
