@@ -20,6 +20,11 @@ import qualified Data.Text.Lazy.Builder as B
 type IndentationLevel = Int64
 
 
+-- | Lift function that works with Data.Text.Lazy
+-- to be able to work with Data.Text.Lazy.Builder.
+-- There should be a better and faster way to manipulate builder. We're using
+-- this for now because it's a lot faster than just using plain Data.Text.Lazy when
+-- concatenating text.
 liftToBuilder :: (T.Text -> T.Text) -> (B.Builder -> B.Builder)
 liftToBuilder f = B.fromLazyText . f . B.toLazyText
 
