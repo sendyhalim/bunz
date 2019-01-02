@@ -3,12 +3,14 @@ JSON beautifier cli tool written in Haskell
 
 ## Usage
 ```
-λ   bunz [master] + bunz "{\"foo\":\"bar\"}"
+// Beautify plain json string
+bunz "{\"foo\":\"bar\"}"
 {
   "foo": "bar"
 }
 
-λ   bunz [master] + cat test.json | bunz
+// Beautify the input
+cat test.json | bunz
 {
   "name": "sendy",
   "popular": false,
