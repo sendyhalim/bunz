@@ -1,5 +1,5 @@
 name:                bunz
-version:             0.0.7
+version:             0.0.8
 synopsis:            CLI tool to beautify JSON string.
 description:         CLI tool to beautify JSON string.
 homepage:            https://github.com/sendyhalim/bunz
@@ -7,7 +7,7 @@ license:             MIT
 license-file:        LICENSE
 author:              Sendy Halim <sendyhalim93@gmail.com>
 maintainer:          Sendy Halim <sendyhalim93@gmail.com>
-copyright:           (c) 2017 Sendy Halim
+copyright:           (c) 2019 Sendy Halim
 category:            CLI, JSON
 build-type:          Simple
 extra-source-files:  README.md
