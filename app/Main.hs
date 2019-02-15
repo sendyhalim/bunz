@@ -3,8 +3,8 @@
 module Main where
 
 import qualified Beautifier             as B
-import qualified Data.Text.Lazy         as T
-import qualified Data.Text.Lazy.IO      as TextIO
+import qualified Data.Text              as T
+import qualified Data.Text.IO           as TextIO
 import           Data.Version           (showVersion)
 import           Paths_bunz             (version)
 import           System.Console.CmdArgs ((&=))
@@ -28,9 +28,10 @@ printBeautified = TextIO.putStr . B.beautify
 runFromStdInput :: IO ()
 runFromStdInput = TextIO.getContents >>= printBeautified
 
+
 runFromArgs :: Args -> IO ()
 runFromArgs (Args { jsonString = str }) = printBeautified $ T.pack str
 
 run :: Bool -> IO ()
 run False = runFromStdInput
-run True = CA.cmdArgs args >>= runFromArgs
+run True  = CA.cmdArgs args >>= runFromArgs
