@@ -1,5 +1,5 @@
 name:                bunz
-version:             0.0.8
+version:             0.0.9
 synopsis:            CLI tool to beautify JSON string.
 description:         CLI tool to beautify JSON string.
 homepage:            https://github.com/sendyhalim/bunz
