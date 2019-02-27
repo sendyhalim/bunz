@@ -44,13 +44,17 @@ splitAtHead str@(T.head -> '\\') = T.splitAt 2 str
 splitAtHead str                  = T.splitAt 1 str
 
 -- | Extract string within double quotes `"` including the double quotes ignoring
--- the suffix after closing quote `"`
+-- the suffix after closing quote `"`. It will ignore unescaped newline within the string.
 --
 -- Examples:
 --
 -- >>> string False "\"test\"whatuppp"
 -- "\"test\""
+--
+-- >>> string False "\"\ntest\"whatuppp"
+-- "\"test\""
 string :: Bool -> T.Text -> [T.Text]
+string flag str@(T.head -> '\n') = string flag (T.tail str)
 string False str@(T.head -> '"') = ["\""] ++ string True (T.tail str)
 string True str@(T.head -> '\"') = ["\""]
 string True str = let (head, tail) = splitAtHead str in [head] ++ string True tail
